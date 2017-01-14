@@ -56,10 +56,6 @@ import curses.wrapper
 logger = logging.getLogger("example")
 
 
-def excpetion_errback(failure):
-    logging.exception(failure)
-
-
 class InputOutput(object):
     """ This is responsible for basic I/O so that a user can interact with
     the example app.
