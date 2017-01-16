@@ -38,6 +38,7 @@ from synapse import events
 
 from twisted.internet import reactor, defer
 from twisted.web.resource import Resource
+from twisted.logger import Logger
 
 from daemonize import Daemonize
 
@@ -56,6 +57,8 @@ class AppserviceSlaveStore(
 
 
 class AppserviceServer(HomeServer):
+    _log = Logger()
+
     def get_db_conn(self, run_new_connection=True):
         # Any param beginning with cp_ is a parameter for adbapi, and should
         # not be passed to the database engine.
@@ -135,8 +138,9 @@ class AppserviceServer(HomeServer):
                 result = yield http_client.get_json(replication_url, args=args)
                 yield store.process_replication(result)
                 replicate(result)
-            except:
-                logger.exception("Error replicating from %r", replication_url)
+            except Exception:
+                self._log.failure("Error replicating from {replication_url!r}",
+                                  replication_url=replication_url)
                 yield sleep(30)
 
 
@@ -168,7 +172,6 @@ def start(config_options):
 
     # Force the pushers to start since they will be disabled in the main config
     config.notify_appservices = True
-
     ps = AppserviceServer(
         config.server_name,
         db_config=config.database_config,
