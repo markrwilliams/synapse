@@ -53,6 +53,7 @@ from synapse.util.rlimit import change_resource_limit
 from synapse.util.stringutils import random_string
 from synapse.util.versionstring import get_version_string
 
+from twisted.logger import Logger
 from twisted.internet import reactor, defer
 from twisted.web.resource import Resource
 
@@ -269,6 +270,8 @@ class SynchrotronApplicationService(object):
 
 
 class SynchrotronServer(HomeServer):
+    _log = Logger()
+
     def get_db_conn(self, run_new_connection=True):
         # Any param beginning with cp_ is a parameter for adbapi, and should
         # not be passed to the database engine.
@@ -423,7 +426,8 @@ class SynchrotronServer(HomeServer):
                 yield presence_handler.process_replication(result)
                 notify(result)
             except:
-                logger.exception("Error replicating from %r", replication_url)
+                self._log.failure("Error replicating from {replication_url!r}",
+                                  replication_url=replication_url)
                 yield sleep(5)
 
     def build_presence_handler(self):
